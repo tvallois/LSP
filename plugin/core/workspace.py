@@ -70,6 +70,16 @@ def get_workspace_folders(folders: 'List[str]') -> 'List[WorkspaceFolder]':
     return [WorkspaceFolder.from_path(f) for f in folders]
 
 
+def sorted_workspace_paths(folders: 'List[str]', file_path: str) -> 'List[str]':
+    sorted_folders = []  # type: List[str]
+    for folder in folders:
+        if file_path and file_path.startswith(folder):
+            sorted_folders.insert(0, folder)
+        else:
+            sorted_folders.append(folder)
+    return sorted_folders
+
+
 def sorted_workspace_folders(folders: 'List[str]', file_path: str) -> 'List[WorkspaceFolder]':
     sorted_folders = []  # type: List[WorkspaceFolder]
     for folder in folders:

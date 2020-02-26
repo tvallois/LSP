@@ -18,7 +18,7 @@ from .workspace import get_workspace_folders
 from .workspace import disable_in_project
 from .workspace import enable_in_project
 from .workspace import ProjectFolders
-from .workspace import sorted_workspace_folders
+from .workspace import sorted_workspace_paths, WorkspaceFolder
 import threading
 
 
@@ -33,7 +33,7 @@ class SublimeLike(Protocol):
 
 class LanguageHandlerListener(Protocol):
 
-    def on_start(self, config_name: str, window: WindowLike) -> bool:
+    def on_start(self, config_name: str, window: WindowLike, workspace_folders: List[str], path: str) -> bool:
         ...
 
     def on_initialized(self, config_name: str, window: WindowLike, client: Client) -> None:
@@ -490,15 +490,17 @@ class WindowManager(object):
             debug(config.name, "was already started")
             return
 
-        if not self._handlers.on_start(config.name, self._window):
+        workspace_folders = sorted_workspace_paths(self._workspace.folders, file_path)
+        startable_folders = self._handlers.on_start(config.name, self._window, workspace_folders, file_path)
+
+        if not startable_folders:
             return
 
         self._window.status_message("Starting " + config.name + "...")
-        workspace_folders = sorted_workspace_folders(self._workspace.folders, file_path)
         try:
             session = self._start_session(
                 self._window,                  # window
-                workspace_folders,             # workspace_folders
+                [WorkspaceFolder.from_path(path) for path in workspace_folders],             # workspace_folders
                 config,                        # config
                 self._handle_pre_initialize,   # on_pre_initialize
                 self._handle_post_initialize,  # on_post_initialize
